@@ -21,7 +21,7 @@ class MainHandler(tornado.web.RequestHandler):
         frontend_server_response = {}
         for index_server in inventory.index_servers:
             index_server_response = yield http_client.fetch(index_server+"/index?q="+query)
-            jsonResponse = json.loads(index_server_response.body) 
+            jsonResponse = json.loads(index_server_response.body.decode('utf-8')) 
             #self.write(jsonResponse)
             for docIdScorePair in jsonResponse['postings']:
                 doc_id = docIdScorePair[0]
@@ -36,7 +36,7 @@ class MainHandler(tornado.web.RequestHandler):
             response = {}
             index = doc_id%len(inventory.doc_servers)
             doc_server_response = yield http_client.fetch(inventory.doc_servers[index]+"/doc?id="+str(doc_id)+"&q="+query)
-            json_doc_server_response = json.loads(doc_server_response.body)
+            json_doc_server_response = json.loads(doc_server_response.body.decode('utf-8'))
             results = json_doc_server_response['results']
             response['title'] = results[0]['title']
             response['url'] = results[0]['url']
