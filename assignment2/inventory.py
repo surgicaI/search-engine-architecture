@@ -5,7 +5,7 @@ document_partitions = 3
 
 items_to_display = 10
 
-WEIGHT_TO_TITLE = 3
+WEIGHT_TO_TITLE = 10
 
 index_server_ports = [55701,55702,55703]
 doc_server_ports = [55704,55705,55706]

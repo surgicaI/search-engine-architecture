@@ -15,6 +15,52 @@ def dot_product(vector1,vector2):
         result = result + value*vector2.get(key,0)
     return result
 
+def bold_query_tokens(snippet,tokens):
+    start_tag = '<strong>'
+    end_tag = '</strong>'
+    for token in tokens:
+        snippet = snippet.replace(token,start_tag+token+end_tag)
+    return snippet
+
+def get_snippet(text, query):
+    #words to be considered before and after the token
+    words_before_token = 7
+    words_after_token = 13
+    supposed_words_in_snippet = words_before_token+words_after_token
+    dots = '...'
+
+    query_tokens = query.split()
+    text_tokens = text.split()
+
+    found_index = -1
+    snippet = ''
+    #finding snippet for the first word in title and if not found then searching second and so on
+    for i in range(0,len(query_tokens)):
+        try:
+            found_index = text_tokens.index(query_tokens[i])
+            break;
+        except ValueError:
+            pass
+            #continue to search next query token in text
+    if found_index != -1:
+        start_index = max(0,found_index-words_before_token)
+        end_index = min(found_index+words_after_token,len(text_tokens))
+        actual_words_in_snippet = end_index-start_index
+        diff_in_words = supposed_words_in_snippet-actual_words_in_snippet
+        if diff_in_words > 0:
+            if (end_index + diff_in_words) < len(text_tokens):
+                end_index += diff_in_words
+            elif start_index-diff_in_words >= 0 :
+                start_index -= diff_in_words
+        #adding dots to begining and end of snippet
+        if start_index>0:
+            text_tokens[start_index] = dots+text_tokens[start_index]
+        if end_index<len(text_tokens):
+            text_tokens[end_index-1]=text_tokens[end_index-1]+dots
+        snippet = " ".join(text_tokens[start_index:end_index])
+        snippet = bold_query_tokens(snippet,query_tokens)
+    return snippet
+
 class DefaultHandler(tornado.web.RequestHandler):
     def get(self):
         self.write("Hello World!")
@@ -93,20 +139,16 @@ class DocumentServerHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self):
         doc_server_output = {}
+        #getting doc_id and query and converting doc_id into int
         doc_id = self.get_argument("id", "Default") 
         doc_id = int(doc_id)
-        query = self.get_argument("q", "Default") 
+        query = self.get_argument("q", "Default")
+        #for formatting output as required by the frontend
         inner_dict = {}
         inner_dict['url'] = self.dict[doc_id]['url']
         inner_dict['title'] = self.dict[doc_id]['title']
         inner_dict['doc_id'] = doc_id
-        text = self.dict[doc_id]['text']
-        tokens = query.split()
-        index = text.index(tokens[0])
-        pre = 15
-        after = 40
-        snippet = text[index-pre:index+after]
-        inner_dict['snippet'] = snippet
+        inner_dict['snippet'] = get_snippet(self.dict[doc_id]['text'],query)
         doc_server_output['results'] = [inner_dict]
         self.write(json.dumps(doc_server_output))
 
@@ -130,7 +172,7 @@ def main():
 
 
 if __name__ == "__main__":
-    indexer.start_indexing()
+    #indexer.start_indexing()
     main()
     
 

@@ -3,6 +3,7 @@ import xml.etree.ElementTree as etree
 import inventory as inv
 from nltk.tokenize import RegexpTokenizer
 import unicodedata
+import re
 
 #function definitions
 def addToInvertedIndex(key,dict,doc_id,weight=1):
@@ -35,15 +36,17 @@ def start_indexing():
     for i in range(0,inv.document_partitions):
         document_stores.append({})
 
+    #starting doc_id from 100
+    doc_id = 100
+
     #iterating over documents and creating inverted index
     for page in root.findall('my_ns:page', namespace):
         #reading title
         title = page.find('my_ns:title',namespace).text
         #reading url
         base_url = "https://en.wikipedia.org/wiki/"
-        #reading doc_id and converting it to int
-        doc_id = page.find('my_ns:id',namespace).text
-        doc_id = int(doc_id)
+        #incrementing doc_id 
+        doc_id += 1
         #reading doc text
         doc = page.find('my_ns:revision',namespace).find('my_ns:text',namespace).text
         #convert form unicode to string
@@ -51,22 +54,25 @@ def start_indexing():
             doc = unicodedata.normalize('NFKD', doc).encode('ascii','ignore')
         #removing punctuation and tokenizing
         tokenizer = RegexpTokenizer(r'\w+')
-        tokens = tokenizer.tokenize(doc)
+        text_tokens = tokenizer.tokenize(doc)
         #adding to dictionary for inverted index
         doc_id_hash = doc_id%inv.index_partitions
         dict = inverted_indices[doc_id_hash]
-        for token in tokens:
+        for token in text_tokens:
             addToInvertedIndex(token,dict,doc_id)
+        #removing special symbols and numbers from title (is it required ?)
+        #title = re.sub('\W+',' ', title)
         #adding Title to inverted index and giving it extra weight
-        for title_token in title.split():
+        title_tokens = title.split()
+        for title_token in title_tokens:
             addToInvertedIndex(title_token,dict,doc_id,weight=inv.WEIGHT_TO_TITLE)
         #adding to dictionary for document stores
         doc_id_hash = doc_id%inv.document_partitions
         document_store_dict = document_stores[doc_id_hash]
         new_dict = {}
         new_dict['title'] = title
-        new_dict['url'] = base_url+'_'.join(title.split())
-        new_dict['text'] = doc
+        new_dict['url'] = base_url+'_'.join(title_tokens)
+        new_dict['text'] = " ".join(text_tokens)
         document_store_dict[doc_id] = new_dict
 
     #pickled dictionary saved in file
