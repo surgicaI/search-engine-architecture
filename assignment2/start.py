@@ -1,17 +1,25 @@
 import tornado.ioloop
 import tornado.web
 from tornado.httpclient import AsyncHTTPClient
-from tornado import gen
+from tornado import gen, process
 import socket
 import inventory
 import json
 import operator
+import pickle
+import indexer
+
+def dot_product(vector1,vector2):
+    result = 0
+    for key,value in vector1.items():
+        result = result + value*vector2.get(key,0)
+    return result
 
 class DefaultHandler(tornado.web.RequestHandler):
     def get(self):
         self.write("Hello World!")
 
-class MainHandler(tornado.web.RequestHandler):
+class FrontendHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self):
         dict = {}
@@ -45,8 +53,84 @@ class MainHandler(tornado.web.RequestHandler):
         frontend_server_response['results'] = frontend_response_list
         self.write(json.dumps(frontend_server_response))
 
+class IndexServerHandler(tornado.web.RequestHandler):
+    def initialize(self, server_id):
+        self.server_id = server_id
+        with open('inverted_index'+str(self.server_id)+'.pickle', 'rb') as handle:
+            self.dict = pickle.load(handle)
+
+    @gen.coroutine
+    def get(self):
+        query = self.get_argument("q", "Default") 
+        tokens = query.split()
+        query_vector = {}
+        document_vectors = {}
+        index_server_output = {}
+        posting_list = []
+        for token in tokens:
+            query_vector[token] = query_vector.get(token,0) + 1
+            tf_list = self.dict.get(token,[])
+            for doc_id,freq in tf_list:
+                if doc_id in document_vectors:
+                    inner_dict = document_vectors[doc_id]
+                    inner_dict[token] = inner_dict.get(token,0) + freq
+                else:
+                    inner_dict = {}
+                    inner_dict[token] = freq
+                    document_vectors[doc_id] = inner_dict
+        for doc_id, document_vector in document_vectors.items():
+            score = dot_product(document_vector,query_vector)
+            posting_list.append([doc_id,score])
+        index_server_output['postings'] = posting_list
+        self.write(json.dumps(index_server_output))
+
+class DocumentServerHandler(tornado.web.RequestHandler):
+    def initialize(self, server_id):
+        self.server_id = server_id
+        with open('document_stores'+str(self.server_id)+'.pickle', 'rb') as handle:
+            self.dict = pickle.load(handle)
+
+    @gen.coroutine
+    def get(self):
+        doc_server_output = {}
+        doc_id = self.get_argument("id", "Default") 
+        doc_id = int(doc_id)
+        query = self.get_argument("q", "Default") 
+        inner_dict = {}
+        inner_dict['url'] = self.dict[doc_id]['url']
+        inner_dict['title'] = self.dict[doc_id]['title']
+        inner_dict['doc_id'] = doc_id
+        text = self.dict[doc_id]['text']
+        tokens = query.split()
+        index = text.index(tokens[0])
+        pre = 15
+        after = 40
+        snippet = text[index-pre:index+after]
+        inner_dict['snippet'] = snippet
+        doc_server_output['results'] = [inner_dict]
+        self.write(json.dumps(doc_server_output))
+
+def main():
+    task_id = process.fork_processes(inventory.document_partitions+inventory.index_partitions+1)
+    #starting front end server
+    if task_id==0 :
+        app = tornado.web.Application([(r"/", DefaultHandler),(r"/search", FrontendHandler),])
+        app.listen(inventory.BASE_PORT)
+    #startting document servers
+    elif task_id <= inventory.document_partitions:
+        server_id = task_id-1
+        app = tornado.web.Application([(r"/", DefaultHandler),(r"/doc", DocumentServerHandler,dict(server_id=server_id))])
+        app.listen(inventory.doc_server_ports[server_id])
+    #starting index servers
+    else:
+        server_id = task_id-inventory.document_partitions-1
+        app = tornado.web.Application([(r"/", DefaultHandler),(r"/index", IndexServerHandler,dict(server_id=server_id))])
+        app.listen(inventory.index_server_ports[server_id])
+    tornado.ioloop.IOLoop.current().start()
+
 
 if __name__ == "__main__":
-    app = tornado.web.Application([(r"/", DefaultHandler),(r"/search", MainHandler),])
-    app.listen(inventory.BASE_PORT)
-    tornado.ioloop.IOLoop.current().start()
+    #indexer.start_indexing()
+    main()
+    
+
