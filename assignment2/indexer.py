@@ -5,20 +5,21 @@ from nltk.tokenize import RegexpTokenizer
 import unicodedata
 
 #function definitions
-def addToInvertedIndex(key,dict,doc_id):
+def addToInvertedIndex(key,dict,doc_id,weight=1):
     if key in dict:
         list = dict[key]
         id,freq = list[-1]
         if id == doc_id:
-            list[-1] = (id,freq+1)
+            list[-1] = (id,freq+weight)
         else:
-            id_freq_tuple = (doc_id,1)
+            id_freq_tuple = (doc_id,weight)
             list.append(id_freq_tuple)
     else:
         list = []
-        id_freq_tuple = (doc_id,1)
+        id_freq_tuple = (doc_id,weight)
         list.append(id_freq_tuple)
         dict[key] = list
+
 def start_indexing():
     #for parsing xml
     info_ret = etree.parse('info_ret.xml')
@@ -56,7 +57,11 @@ def start_indexing():
         dict = inverted_indices[doc_id_hash]
         for token in tokens:
             addToInvertedIndex(token,dict,doc_id)
+        #adding Title to inverted index and giving it extra weight
+        for title_token in title.split():
+            addToInvertedIndex(title_token,dict,doc_id,weight=inv.WEIGHT_TO_TITLE)
         #adding to dictionary for document stores
+        doc_id_hash = doc_id%inv.document_partitions
         document_store_dict = document_stores[doc_id_hash]
         new_dict = {}
         new_dict['title'] = title

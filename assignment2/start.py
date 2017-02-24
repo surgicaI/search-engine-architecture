@@ -130,7 +130,7 @@ def main():
 
 
 if __name__ == "__main__":
-    #indexer.start_indexing()
+    indexer.start_indexing()
     main()
     
 
