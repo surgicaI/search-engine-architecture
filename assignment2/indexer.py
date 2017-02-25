@@ -68,9 +68,9 @@ def start_indexing():
         #convert form unicode to string
         if isinstance(doc,unicode) :
             doc = unicodedata.normalize('NFKD', doc).encode('ascii','ignore')
-        #removing punctuation and tokenizing
+        #removing punctuation and tokenizing after converting to lower case
         tokenizer = RegexpTokenizer(r'\w+')
-        text_tokens = tokenizer.tokenize(doc)
+        text_tokens = tokenizer.tokenize(doc.lower())
         #adding to dictionary for inverted index
         doc_id_hash = doc_id%inv.index_partitions
         dict = inverted_indices[doc_id_hash]
