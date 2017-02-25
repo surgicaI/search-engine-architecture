@@ -172,7 +172,9 @@ def main():
 
 
 if __name__ == "__main__":
-    #indexer.start_indexing()
+    #indexer will only index if pickled files are not present in current directory
+    indexer.start_indexing()
+    print "indexing complete, starting servers"
     main()
     
 

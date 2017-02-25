@@ -4,6 +4,7 @@ import inventory as inv
 from nltk.tokenize import RegexpTokenizer
 import unicodedata
 import re
+import os.path
 
 #function definitions
 def addToInvertedIndex(key,dict,doc_id,weight=1):
@@ -22,6 +23,21 @@ def addToInvertedIndex(key,dict,doc_id,weight=1):
         dict[key] = list
 
 def start_indexing():
+    #if pickled files are already present no need to index again
+    already_indexed = True
+    for i in range(0,inv.index_partitions):
+        file_name = 'inverted_index'+str(i)+'.pickle'
+        if not os.path.isfile(file_name):
+            already_indexed = False
+            break
+    if already_indexed:
+        for i in range(0,inv.document_partitions):
+            file_name = 'document_stores'+str(i)+'.pickle'
+            if not os.path.isfile(file_name):
+                already_indexed = False
+                break
+    if already_indexed:
+        return
     #for parsing xml
     info_ret = etree.parse('info_ret.xml')
     root = info_ret.getroot()
