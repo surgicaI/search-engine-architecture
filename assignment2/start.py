@@ -20,7 +20,7 @@ class FrontendHandler(tornado.web.RequestHandler):
         dict = {}
         http_client = AsyncHTTPClient()
         frontend_server_response = {}
-        query = self.get_argument("q", "Default")
+        query = self.get_argument("q", "Default").replace(' ', '%20')
         for index_server in inventory.index_servers:
             index_server_response = yield http_client.fetch(index_server+"/index?q="+query)
             jsonResponse = json.loads(index_server_response.body.decode('utf-8')) 
