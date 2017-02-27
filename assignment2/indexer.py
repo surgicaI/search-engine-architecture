@@ -80,8 +80,9 @@ def start_indexing():
         #title = re.sub('\W+',' ', title)
         #adding Title to inverted index and giving it extra weight
         title_tokens = title.split()
+        #adding lowercase in side forloop so that title and url contains exact same case as title
         for title_token in title_tokens:
-            addToInvertedIndex(title_token,dict,doc_id,weight=inv.WEIGHT_TO_TITLE)
+            addToInvertedIndex(title_token.lower(),dict,doc_id,weight=inv.WEIGHT_TO_TITLE)
         #adding to dictionary for document stores
         doc_id_hash = doc_id%inv.document_partitions
         document_store_dict = document_stores[doc_id_hash]

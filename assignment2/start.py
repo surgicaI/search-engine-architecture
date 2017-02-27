@@ -20,7 +20,7 @@ class FrontendHandler(tornado.web.RequestHandler):
         dict = {}
         http_client = AsyncHTTPClient()
         frontend_server_response = {}
-        query = self.get_argument("q", "Default").replace(' ', '%20')
+        query = self.get_argument("q", "Default").replace(' ', '%20').lower()
         for index_server in inventory.index_servers:
             index_server_response = yield http_client.fetch(index_server+"/index?q="+query)
             jsonResponse = json.loads(index_server_response.body.decode('utf-8')) 
@@ -59,11 +59,16 @@ class IndexServerHandler(tornado.web.RequestHandler):
         query = self.get_argument("q", "Default") 
         tokens = query.split()
         query_vector = {}
+        #document_vectors dict will contain a vector for each doc that contains
+        # atleast one token in the query
         document_vectors = {}
         index_server_output = {}
         posting_list = []
         for token in tokens:
-            query_vector[token] = query_vector.get(token,0) + 1
+            #writing a word twice in query wont change results
+            if token in query_vector:
+                continue
+            query_vector[token] = 1
             tf_list = self.dict.get(token,[])
             for doc_id,freq in tf_list:
                 if doc_id in document_vectors:
@@ -123,7 +128,7 @@ def main():
 if __name__ == "__main__":
     #indexer will only index if pickled files are not present in current directory
     indexer.start_indexing()
-    print "indexing complete, starting servers"
+    print "starting servers"
     main()
     
 
