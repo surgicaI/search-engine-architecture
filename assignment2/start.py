@@ -39,7 +39,8 @@ class FrontendHandler(tornado.web.RequestHandler):
             doc_server_response = yield http_client.fetch(inventory.doc_servers[index]+"/doc?id="+str(doc_id)+"&q="+query)
             json_doc_server_response = json.loads(doc_server_response.body.decode('utf-8'))
             results = json_doc_server_response['results']
-            response['doc_id'] = doc_id
+            #for debuggin uncomment this line
+            #response['doc_id'] = doc_id
             response['title'] = results[0]['title']
             response['url'] = results[0]['url']
             response['snippet'] = results[0]['snippet']
@@ -81,7 +82,8 @@ class IndexServerHandler(tornado.web.RequestHandler):
         for doc_id, document_vector in document_vectors.items():
             score = util.dot_product(document_vector,query_vector)
             posting_list.append([doc_id,score])
-        index_server_output['postings'] = posting_list
+        posting_list.sort(key=lambda tup: tup[1],reverse=True)
+        index_server_output['postings'] = posting_list[:inventory.items_returned_by_index_server]
         self.write(json.dumps(index_server_output))
 
 class DocumentServerHandler(tornado.web.RequestHandler):

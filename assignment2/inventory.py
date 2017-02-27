@@ -4,6 +4,7 @@ index_partitions = 3
 document_partitions = 3
 
 items_to_display = 10
+items_returned_by_index_server = 10
 
 WEIGHT_TO_TITLE = 100
 
