@@ -9,6 +9,9 @@ import operator
 import pickle
 import indexer
 import util
+import logging
+
+log = logging.getLogger(__name__)
 
 class DefaultHandler(tornado.web.RequestHandler):
     def get(self):
@@ -114,21 +117,25 @@ def main():
     if task_id==0 :
         app = tornado.web.Application([(r"/", DefaultHandler),(r"/search", FrontendHandler),])
         app.listen(inventory.BASE_PORT)
-    #startting document servers
+        log.info("Frontend listening on " + str(inventory.BASE_PORT))
+    #starting document servers
     elif task_id <= inventory.document_partitions:
         server_id = task_id-1
         app = tornado.web.Application([(r"/", DefaultHandler),(r"/doc", DocumentServerHandler,dict(server_id=server_id))])
         app.listen(inventory.doc_server_ports[server_id])
+        log.info("Document server "+str(server_id)+" listening on " + str(inventory.doc_server_ports[server_id]))
     #starting index servers
     else:
         server_id = task_id-inventory.document_partitions-1
         app = tornado.web.Application([(r"/", DefaultHandler),(r"/index", IndexServerHandler,dict(server_id=server_id))])
         app.listen(inventory.index_server_ports[server_id])
+        log.info("Index server "+str(server_id)+" listening on " + str(inventory.index_server_ports[server_id]))
     tornado.ioloop.IOLoop.current().start()
 
 
 if __name__ == "__main__":
     #indexer will only index if pickled files are not present in current directory
+    logging.basicConfig(format='%(levelname)s - %(asctime)s - %(message)s', level=logging.DEBUG)
     indexer.start_indexing()
     print "starting servers"
     main()
