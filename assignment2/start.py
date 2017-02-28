@@ -79,10 +79,10 @@ class IndexServerHandler(tornado.web.RequestHandler):
             for doc_id,freq in tf_list:
                 if doc_id in document_vectors:
                     inner_dict = document_vectors[doc_id]
-                    inner_dict[token] = inner_dict.get(token,0) + freq*(term_inv_doc_freq_dict.get(token,1))
+                    inner_dict[token] = inner_dict.get(token,0) + freq*(self.term_inv_doc_freq_dict.get(token,1))
                 else:
                     inner_dict = {}
-                    inner_dict[token] = freq*(term_inv_doc_freq_dict.get(token,1))
+                    inner_dict[token] = freq*(self.term_inv_doc_freq_dict.get(token,1))
                     document_vectors[doc_id] = inner_dict
         for doc_id, document_vector in document_vectors.items():
             score = util.dot_product(document_vector,query_vector)
