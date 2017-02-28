@@ -66,8 +66,8 @@ def start_indexing():
         #reading doc text
         doc = page.find('my_ns:revision',namespace).find('my_ns:text',namespace).text
         #convert form unicode to string
-        if isinstance(doc,unicode) :
-            doc = unicodedata.normalize('NFKD', doc).encode('ascii','ignore')
+        #if isinstance(doc,unicode) :
+            #doc = unicodedata.normalize('NFKD', doc).encode('ascii','ignore')
         #removing punctuation and tokenizing after converting to lower case
         tokenizer = RegexpTokenizer(r'\w+')
         text_tokens = tokenizer.tokenize(doc.lower())
