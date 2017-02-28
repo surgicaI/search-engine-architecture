@@ -47,6 +47,9 @@ class FrontendHandler(tornado.web.RequestHandler):
             #for debuggin uncomment this line
             #response['doc_id'] = doc_id
             title = results[0]['title']
+            if 'category' in title.lower():
+                num_of_items -= 1
+                continue
             response['title'] = title
             response['url'] = results[0]['url']
             snippet = results[0]['snippet']
