@@ -7,7 +7,6 @@ items_to_display = 10
 items_returned_by_index_server = 10
 
 WEIGHT_TO_TITLE = 100
-KEY_TOTAL_DOCS = 'total_docs:'
 
 index_server_ports = [55701,55702,55703]
 doc_server_ports = [55704,55705,55706]
