@@ -62,7 +62,7 @@ def start_indexing():
     term_doc_freq_info = set()
 
     #starting doc_id from 100
-    doc_id = 100
+    doc_id = 0
 
     #iterating over documents and creating inverted index
     for page in root.findall('my_ns:page', namespace):
@@ -74,9 +74,6 @@ def start_indexing():
         doc_id += 1
         #reading doc text
         doc = page.find('my_ns:revision',namespace).find('my_ns:text',namespace).text
-        #convert form unicode to string
-        if isinstance(doc,unicode) :
-            doc = unicodedata.normalize('NFKD', doc).encode('ascii','ignore')
 
         #removing punctuation and tokenizing after converting to lower case
         tokenizer = RegexpTokenizer(r'\w+')
@@ -112,6 +109,9 @@ def start_indexing():
         new_dict['url'] = base_url+'_'.join(title_tokens)
         new_dict['text'] = " ".join(text_tokens)
         document_store_dict[doc_id] = new_dict
+
+    #adding total number of docs
+    term_doc_freq[inv.KEY_TOTAL_DOCS] = doc_id
 
     #pickled dictionary saved in file
     index = 0

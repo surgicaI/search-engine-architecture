@@ -59,6 +59,7 @@ class IndexServerHandler(tornado.web.RequestHandler):
             self.dict = pickle.load(handle)
         with open('term_doc_freq.pickle', 'rb') as handle:
             self.term_doc_freq_dict = pickle.load(handle)
+        self.total_docs = self.term_doc_freq_dict[inventory.KEY_TOTAL_DOCS]
 
     @gen.coroutine
     def get(self):
