@@ -32,11 +32,13 @@ class FrontendHandler(tornado.web.RequestHandler):
                 score = docIdScorePair[1]
                 dict[doc_id] = score
 
-        sortedList = sorted(dict.items(), key=operator.itemgetter(1))
-        sortedList.reverse()
-        sortedList = sortedList[0:inventory.items_to_display]
+        sortedList = sorted(dict.items(), key=operator.itemgetter(1), reverse=True)
         frontend_response_list = []
+        num_of_items = 0
         for doc_id,score in sortedList:
+            num_of_items+=1
+            if num_of_items >inventory.items_to_display:
+                break
             response = {}
             index = doc_id%len(inventory.doc_servers)
             doc_server_response = yield http_client.fetch(inventory.doc_servers[index]+"/doc?id="+str(doc_id)+"&q="+query)
@@ -44,9 +46,14 @@ class FrontendHandler(tornado.web.RequestHandler):
             results = json_doc_server_response['results']
             #for debuggin uncomment this line
             #response['doc_id'] = doc_id
-            response['title'] = results[0]['title']
+            title = results[0]['title']
+            response['title'] = title
             response['url'] = results[0]['url']
-            response['snippet'] = results[0]['snippet']
+            snippet = results[0]['snippet']
+            if len(snippet) < 20:
+                num_of_items -= 1
+                continue
+            response['snippet'] = snippet
             frontend_response_list.append(response)
         frontend_server_response['num_results'] = len(frontend_response_list)
         frontend_server_response['results'] = frontend_response_list
