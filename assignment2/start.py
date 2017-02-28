@@ -74,7 +74,7 @@ class IndexServerHandler(tornado.web.RequestHandler):
             #writing a word twice in query wont change results
             if token in query_vector:
                 continue
-            query_vector[token] = 1
+            query_vector[token] = 1.0*(self.term_inv_doc_freq_dict.get(token,1.0))
             tf_list = self.dict.get(token,[])
             for doc_id,freq in tf_list:
                 if doc_id in document_vectors:
