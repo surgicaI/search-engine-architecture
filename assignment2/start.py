@@ -57,6 +57,8 @@ class IndexServerHandler(tornado.web.RequestHandler):
         self.server_id = server_id
         with open('inverted_index'+str(self.server_id)+'.pickle', 'rb') as handle:
             self.dict = pickle.load(handle)
+        with open('term_doc_freq.pickle', 'rb') as handle:
+            self.term_doc_freq_dict = pickle.load(handle)
 
     @gen.coroutine
     def get(self):

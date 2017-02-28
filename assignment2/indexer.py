@@ -37,7 +37,12 @@ def start_indexing():
                 already_indexed = False
                 break
     if already_indexed:
+        file_name = 'term_doc_freq.pickle'
+        if not os.path.isfile(file_name):
+            already_indexed = False
+    if already_indexed:
         return
+
     #for parsing xml
     info_ret = etree.parse('info_ret.xml')
     root = info_ret.getroot()
@@ -51,6 +56,10 @@ def start_indexing():
     document_stores = []
     for i in range(0,inv.document_partitions):
         document_stores.append({})
+    #dict that maps each term to its document frequency
+    term_doc_freq = {}
+    #set to store info if the token is appeared in a doc for the first time
+    term_doc_freq_info = set()
 
     #starting doc_id from 100
     doc_id = 100
@@ -66,23 +75,35 @@ def start_indexing():
         #reading doc text
         doc = page.find('my_ns:revision',namespace).find('my_ns:text',namespace).text
         #convert form unicode to string
-        #if isinstance(doc,unicode) :
-            #doc = unicodedata.normalize('NFKD', doc).encode('ascii','ignore')
+        if isinstance(doc,unicode) :
+            doc = unicodedata.normalize('NFKD', doc).encode('ascii','ignore')
+
         #removing punctuation and tokenizing after converting to lower case
         tokenizer = RegexpTokenizer(r'\w+')
         text_tokens = tokenizer.tokenize(doc.lower())
         #adding to dictionary for inverted index
         doc_id_hash = doc_id%inv.index_partitions
         dict = inverted_indices[doc_id_hash]
+        #clearing the set
+        term_doc_freq_info.clear()
+        #adding tokens to inverted index and to term_doc_freq dict
         for token in text_tokens:
             addToInvertedIndex(token,dict,doc_id)
-        #removing special symbols and numbers from title (is it required ?)
-        #title = re.sub('\W+',' ', title)
+            #if token is appearing in doc for the first time
+            if not token in term_doc_freq_info:
+                term_doc_freq_info.add(token)
+                term_doc_freq[token] = term_doc_freq.get(token,0) + 1
+
         #adding Title to inverted index and giving it extra weight
         title_tokens = title.split()
+        title_tokens_nltk_tokenized = tokenizer.tokenize(title.lower())
         #adding lowercase in side forloop so that title and url contains exact same case as title
-        for title_token in title_tokens:
-            addToInvertedIndex(title_token.lower(),dict,doc_id,weight=inv.WEIGHT_TO_TITLE)
+        for title_token in title_tokens_nltk_tokenized:
+            addToInvertedIndex(title_token,dict,doc_id,weight=inv.WEIGHT_TO_TITLE)
+            #if token is appearing in doc for the first time
+            if not title_token in term_doc_freq_info:
+                term_doc_freq_info.add(title_token)
+                term_doc_freq[title_token] = term_doc_freq.get(title_token,0) + 1
         #adding to dictionary for document stores
         doc_id_hash = doc_id%inv.document_partitions
         document_store_dict = document_stores[doc_id_hash]
@@ -103,4 +124,8 @@ def start_indexing():
         with open('document_stores'+str(index)+'.pickle', 'wb') as handle:
             pickle.dump(dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
         index+=1
+    with open('term_doc_freq.pickle', 'wb') as handle:
+        pickle.dump(term_doc_freq, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
 
