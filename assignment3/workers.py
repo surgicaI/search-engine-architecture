@@ -5,9 +5,12 @@ from tornado import gen, process
 import socket
 import inventory
 import logging
-import os
+import subprocess
+import json
+import uuid
 
 log = logging.getLogger(__name__)
+map_output_dict = {}
 
 class DefaultHandler(tornado.web.RequestHandler):
     def get(self):
@@ -19,15 +22,28 @@ class MapperHandlerMap(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self):
+        task_id = uuid.uuid4().hex
         mapper_path = self.get_argument("mapper_path", "wordcount/mapper.py")
-        input_file = self.get_argument("input_file", "./starter/oos_jobs/0.in")
-        num_reducers = self.get_argument("num_reducers", 3)
-        for filename in os.listdir(job_path):
-            if filename.endswith('.in'):
-                filename = "/".join([job_path,filename])
-                cmd = "cat " + filename + " |"
-                os.system(" ".join([cmd,inventory.env,reducer_path]))
-        self.write(mapper_path+"<br/>"+input_file+"<br/>"+str(num_reducers))
+        input_file = self.get_argument("input_file", "fish_jobs/0.in")
+        num_reducers = int(self.get_argument("num_reducers", 3))
+        map_output = [[] for _ in range(num_reducers)]
+        with open(input_file,'rb') as f:
+            input_file_content = f.read()
+        map_sub_process=subprocess.Popen([inventory.env,mapper_path],
+            stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        map_output_raw = map_sub_process.communicate(input=input_file_content)[0].strip().split('\n')
+        map_output_raw = [x.strip().split('\t') for x in map_output_raw]
+        #sorting the list
+        map_output_raw.sort(key=lambda x: x[0])
+        #hashing list and finding reducer partition
+        for item in map_output_raw:
+            reducer_partition = hash(item[0])%num_reducers
+            map_output[reducer_partition].append(item)
+        map_output_dict[task_id]=map_output
+        display_info={}
+        display_info['map_task_id'] = task_id
+        display_info['status'] = 'success'
+        self.write(json.dumps(display_info))
 
 class MapperHandlerRetrieve(tornado.web.RequestHandler):
     def initialize(self, server_id):
@@ -35,9 +51,14 @@ class MapperHandlerRetrieve(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self):
-        reducer_ix = self.get_argument("reducer_ix", 0)
-        map_task_id = self.get_argument("map_task_id", "task_id") 
-        self.write(str(reducer_ix)+"<br/>"+map_task_id)
+        reducer_ix = int(self.get_argument("reducer_ix", 0))
+        map_task_id = self.get_argument("map_task_id", "task_id")
+        map_output = map_output_dict.get(map_task_id,[])
+        if len(map_output)>reducer_ix:
+            map_output_partition = map_output[reducer_ix]
+        else:
+            map_output_partition = []
+        self.write(json.dumps(map_output_partition))
 
 class ReducerHandler(tornado.web.RequestHandler):
     def initialize(self, server_id):
