@@ -8,6 +8,7 @@ import logging
 import subprocess
 import json
 import uuid
+import urllib
 
 log = logging.getLogger(__name__)
 map_output_dict = {}
@@ -27,11 +28,12 @@ class MapperHandlerMap(tornado.web.RequestHandler):
         input_file = self.get_argument("input_file", "fish_jobs/0.in")
         num_reducers = int(self.get_argument("num_reducers", 3))
         map_output = [[] for _ in range(num_reducers)]
-        with open(input_file,'rb') as f:
+        with open(input_file,'r') as f:
             input_file_content = f.read()
         map_sub_process=subprocess.Popen([inventory.env,mapper_path],
             stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        map_output_raw = map_sub_process.communicate(input=input_file_content)[0].strip().split('\n')
+        (map_output_raw,_) = map_sub_process.communicate(input=input_file_content.encode())
+        map_output_raw = map_output_raw.decode().strip().split('\n')
         map_output_raw = [x.strip().split('\t') for x in map_output_raw]
         #sorting the list
         map_output_raw.sort(key=lambda x: x[0])
@@ -70,13 +72,32 @@ class ReducerHandler(tornado.web.RequestHandler):
         reducer_path = self.get_argument("reducer_path", "wordcount/reducer.py")
         map_task_ids = self.get_argument("map_task_ids", "tsdk_id").split(',')
         job_path = self.get_argument("job_path", "fish_jobs")
-        http = httpclient.AsyncHTTPClient()
-        server = inventory.mapper_servers[i]
-        params = urllib.parse.urlencode({'reducer_ix': reducer_ix,
-                                         'map_task_id': map_task_ids[i]})
-        url = "http://%s/retrieve_map_output?%s" % (server, params)
-        http.fetch(url)
-        self.write(str(reducer_ix)+"<br/>"+reducer_path+"<br/>"+map_task_ids+"<br/>"+job_path)
+        num_mappers = len(map_task_ids)
+        http = AsyncHTTPClient()
+        futures = []
+
+        for i in range(num_mappers):
+            server = inventory.mapper_servers[i]
+            params = urllib.parse.urlencode({'reducer_ix': reducer_ix,
+                                             'map_task_id': map_task_ids[i]})
+            url = "http://%s/retrieve_map_output?%s" % (server, params)
+            #print("Fetching", url)
+            http.fetch(url)
+            futures.append(http.fetch(url))
+        responses = yield futures
+
+        kv_pairs = []
+        for r in responses:
+            #print(json.loads(r.body.decode()))
+            kv_pairs.extend(json.loads(r.body.decode()))
+        kv_pairs.sort(key=lambda x: x[0])
+
+        kv_string = "\n".join([pair[0] + "\t" + pair[1] for pair in kv_pairs])
+        p = subprocess.Popen(reducer_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        (out, _) = p.communicate(kv_string.encode())
+
+        #print(out.decode())
+        self.write(out.decode())
 
 def main():
     task_id = process.fork_processes(inventory.num_workers+inventory.num_workers)
@@ -98,7 +119,6 @@ def main():
 
 
 if __name__ == "__main__":
-    #indexer will only index if pickled files are not present in current directory
     logging.basicConfig(format='%(levelname)s - %(asctime)s - %(message)s', level=logging.DEBUG)
     main()
     
