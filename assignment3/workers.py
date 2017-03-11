@@ -9,6 +9,7 @@ import subprocess
 import json
 import uuid
 import urllib
+import fcntl
 
 log = logging.getLogger(__name__)
 map_output_dict = {}
@@ -96,8 +97,14 @@ class ReducerHandler(tornado.web.RequestHandler):
         p = subprocess.Popen(reducer_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         (out, _) = p.communicate(kv_string.encode())
 
+        with open(job_path+"/0.out", "a") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            f.write(out.decode())
+            fcntl.flock(f, fcntl.LOCK_UN)
+
         #print(out.decode())
-        self.write(out.decode())
+        reducer_display_info = {'status':'success'}
+        self.write(json.dumps(reducer_display_info))
 
 def main():
     task_id = process.fork_processes(inventory.num_workers+inventory.num_workers)
