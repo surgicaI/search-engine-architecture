@@ -28,8 +28,8 @@ class MapperHandlerMap(tornado.web.RequestHandler):
         input_file = self.get_argument("input_file", "fish_jobs/0.in")
         num_reducers = int(self.get_argument("num_reducers", 3))
         map_output = [[] for _ in range(num_reducers)]
-        with open(input_file,'r') as f:
-            input_file_content = f.read()
+        with open(input_file,'rb') as f:
+            input_file_content = f.read().decode('utf-8')
         map_sub_process=subprocess.Popen([inventory.env,mapper_path],
             stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         (map_output_raw,_) = map_sub_process.communicate(input=input_file_content.encode())
@@ -95,8 +95,8 @@ class ReducerHandler(tornado.web.RequestHandler):
         p = subprocess.Popen(reducer_path, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         (out, _) = p.communicate(kv_string.encode())
 
-        with open('{0}/{1}.out'.format(job_path,reducer_ix), "w") as f:
-            f.write(out.decode())
+        with open('{0}/{1}.out'.format(job_path,reducer_ix), "wb") as f:
+            f.write(out)
 
         #print(out.decode())
         reducer_display_info = {'status':'success'}
