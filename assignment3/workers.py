@@ -77,7 +77,7 @@ class ReducerHandler(tornado.web.RequestHandler):
         futures = []
 
         for i in range(num_mappers):
-            server = inventory.mapper_servers[i]
+            server = inventory.worker_servers[i]
             params = urllib.parse.urlencode({'reducer_ix': reducer_ix,
                                              'map_task_id': map_task_ids[i]})
             url = "http://%s/retrieve_map_output?%s" % (server, params)
@@ -104,21 +104,15 @@ class ReducerHandler(tornado.web.RequestHandler):
         self.write(json.dumps(reducer_display_info))
 
 def main():
-    task_id = process.fork_processes(inventory.num_workers+inventory.num_workers)
-    #starting Mapper servers
-    if task_id < inventory.num_workers:
-        server_id = task_id
-        app = tornado.web.Application([(r"/", DefaultHandler),
-            (r"/map", MapperHandlerMap,dict(server_id=server_id)),
-            (r"/retrieve_map_output", MapperHandlerRetrieve,dict(server_id=server_id))])
-        app.listen(inventory.mapper_ports[server_id])
-        log.info("Mapper server "+str(server_id)+" listening on " + str(inventory.mapper_ports[server_id]))
-    #starting Reducing servers
-    else:
-        server_id = task_id-inventory.num_workers
-        app = tornado.web.Application([(r"/", DefaultHandler),(r"/reduce", ReducerHandler,dict(server_id=server_id))])
-        app.listen(inventory.reducer_ports[server_id])
-        log.info("Index server "+str(server_id)+" listening on " + str(inventory.reducer_ports[server_id]))
+    task_id = process.fork_processes(inventory.num_workers)
+    #starting workers
+    server_id = task_id
+    app = tornado.web.Application([(r"/", DefaultHandler),
+        (r"/map", MapperHandlerMap,dict(server_id=server_id)),
+        (r"/retrieve_map_output", MapperHandlerRetrieve,dict(server_id=server_id)),
+        (r"/reduce", ReducerHandler,dict(server_id=server_id))])
+    app.listen(inventory.worker_ports[server_id])
+    log.info("Worker "+str(server_id)+" listening on " + str(inventory.worker_ports[server_id]))
     tornado.ioloop.IOLoop.current().start()
 
 

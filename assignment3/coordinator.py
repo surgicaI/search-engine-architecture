@@ -25,7 +25,7 @@ for input_file in os.listdir(job_path):
         params = urllib.parse.urlencode({'mapper_path': mapper_path,
                                          'num_reducers': num_reducers,
                                          'input_file':input_file})
-        server = inventory.mapper_servers[index]
+        server = inventory.worker_servers[index]
         index += 1
         url = "http://%s/map?%s" % (server, params)
         print('fetching url:'+url)
@@ -37,7 +37,7 @@ for input_file in os.listdir(job_path):
             task_ids.append(task_id)
 
 for index in range(num_reducers):
-    server = inventory.reducer_servers[index]
+    server = inventory.worker_servers[index]
     params = urllib.parse.urlencode({'reducer_ix': index,
                                          'job_path': job_path,
                                          'reducer_path':reducer_path,
