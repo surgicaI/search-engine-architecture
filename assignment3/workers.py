@@ -70,7 +70,7 @@ class ReducerHandler(tornado.web.RequestHandler):
     def get(self):
         reducer_ix = self.get_argument("reducer_ix", 0)
         reducer_path = self.get_argument("reducer_path", "wordcount/reducer.py")
-        map_task_ids = self.get_argument("map_task_ids", "tsdk_id").split(',')
+        map_task_ids = self.get_argument("map_task_ids", "task_id").split(',')
         job_path = self.get_argument("job_path", "fish_jobs")
         num_mappers = len(map_task_ids)
         http = AsyncHTTPClient()
