@@ -34,6 +34,8 @@ def main():
                                              'input_file':input_file})
             server = inventory.worker_servers[index]
             index += 1
+            if index >= inventory.num_workers:
+                index=0
             url = "http://%s/map?%s" % (server, params)
             print('fetching url:'+url)
             futures.append(http.fetch(url))
@@ -50,7 +52,7 @@ def main():
     futures = []
 
     for index in range(num_reducers):
-        server = inventory.worker_servers[index]
+        server = inventory.worker_servers[index%inventory.num_workers]
         params = urllib.parse.urlencode({'reducer_ix': index,
                                              'job_path': job_path,
                                              'reducer_path':reducer_path,

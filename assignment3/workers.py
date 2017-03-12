@@ -77,7 +77,7 @@ class ReducerHandler(tornado.web.RequestHandler):
         futures = []
 
         for i in range(num_mappers):
-            server = inventory.worker_servers[i]
+            server = inventory.worker_servers[i%inventory.num_workers]
             params = urllib.parse.urlencode({'reducer_ix': reducer_ix,
                                              'map_task_id': map_task_ids[i]})
             url = "http://%s/retrieve_map_output?%s" % (server, params)
