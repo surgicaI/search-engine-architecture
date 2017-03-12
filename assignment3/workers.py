@@ -82,7 +82,6 @@ class ReducerHandler(tornado.web.RequestHandler):
                                              'map_task_id': map_task_ids[i]})
             url = "http://%s/retrieve_map_output?%s" % (server, params)
             #print("Fetching", url)
-            http.fetch(url)
             futures.append(http.fetch(url))
         responses = yield futures
 
