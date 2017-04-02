@@ -8,10 +8,12 @@ data = data.strip().split('\n')
 data = [item.split('\t') for item in data]
 doc_store = {}
 for item in data:
-    doc_id = item[0]
-    [title, body] = item[1].split(',')
-    title = '_'.join(title.split())
-    doc_store[doc_id] = (title,body)
+    doc_id = int(item[0])
+    doc = item[1].split(',')
+    if len(doc) >= 2:
+        title = ','.join(doc[0:-1])
+        body = doc[-1]
+        doc_store[doc_id] = (title,body)
 
 pickled_doc_store = pickle.dumps(doc_store,protocol=pickle.HIGHEST_PROTOCOL)
 sys.stdout.buffer.write(pickled_doc_store) 

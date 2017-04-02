@@ -65,9 +65,9 @@ class FrontendHandler(tornado.web.RequestHandler):
 class IndexServerHandler(tornado.web.RequestHandler):
     def initialize(self, server_id):
         self.server_id = server_id
-        with open('inverted_index'+str(self.server_id)+'.pickle', 'rb') as handle:
+        with open('./../assignment4/invindex_jobs/'+str(self.server_id)+'.out', 'rb') as handle:
             self.dict = pickle.load(handle)
-        with open('term_inv_doc_freq.pickle', 'rb') as handle:
+        with open('./../assignment4/idf_jobs/0.out', 'rb') as handle:
             self.term_inv_doc_freq_dict = pickle.load(handle)
 
     @gen.coroutine
@@ -104,7 +104,7 @@ class IndexServerHandler(tornado.web.RequestHandler):
 class DocumentServerHandler(tornado.web.RequestHandler):
     def initialize(self, server_id):
         self.server_id = server_id
-        with open('document_stores'+str(self.server_id)+'.pickle', 'rb') as handle:
+        with open('./../assignment4/docs_jobs/'+str(self.server_id)+'.out', 'rb') as handle:
             self.dict = pickle.load(handle)
 
     @gen.coroutine
@@ -116,7 +116,7 @@ class DocumentServerHandler(tornado.web.RequestHandler):
         query = self.get_argument("q", "Default")
         #for formatting output as required by the frontend
         inner_dict = {}
-        inner_dict['url'] = self.dict[doc_id]['url']
+        inner_dict['url'] = '_'.join(self.dict[doc_id]['title'].split())
         inner_dict['title'] = self.dict[doc_id]['title']
         inner_dict['doc_id'] = doc_id
         inner_dict['snippet'] = util.get_snippet(self.dict[doc_id]['text'],query)
