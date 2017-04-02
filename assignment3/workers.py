@@ -13,6 +13,13 @@ import urllib
 log = logging.getLogger(__name__)
 map_output_dict = {}
 
+def is_int(item):
+    try:
+        int(item)
+        return True
+    except ValueError:
+        return False
+
 class DefaultHandler(tornado.web.RequestHandler):
     def get(self):
         self.write("Hello World!")
@@ -39,7 +46,10 @@ class MapperHandlerMap(tornado.web.RequestHandler):
         map_output_raw.sort(key=lambda x: x[0])
         #hashing list and finding reducer partition
         for item in map_output_raw:
-            reducer_partition = hash(item[0])%num_reducers
+            if is_int(item[0]):
+                reducer_partition = (int(item[0]))%num_reducers
+            else:
+                reducer_partition = hash(item[0])%num_reducers
             map_output[reducer_partition].append(item)
         map_output_dict[task_id]=map_output
         display_info={}

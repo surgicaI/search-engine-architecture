@@ -13,7 +13,7 @@ for item in data:
     if len(doc) >= 2:
         title = ','.join(doc[0:-1])
         body = doc[-1]
-        doc_store[doc_id] = (title,body)
+        doc_store[doc_id] = {'title':title,'text':body}
 
 pickled_doc_store = pickle.dumps(doc_store,protocol=pickle.HIGHEST_PROTOCOL)
 sys.stdout.buffer.write(pickled_doc_store) 
