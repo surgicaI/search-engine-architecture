@@ -148,7 +148,7 @@ def main():
 if __name__ == "__main__":
     #indexer will only index if pickled files are not present in current directory
     logging.basicConfig(format='%(levelname)s - %(asctime)s - %(message)s', level=logging.DEBUG)
-    indexer.start_indexing()
+    #indexer.start_indexing()
     main()
     
 
