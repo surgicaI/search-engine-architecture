@@ -24,6 +24,8 @@ def main():
     docs_each_partition = int(total_no_of_docs/num_partitions)
 
     pages = root.findall('my_ns:page', namespace)
+    #starting doc_id from 100
+    doc_id = 100
 
     for i in range(num_partitions):
         root = etree.Element('root')
@@ -34,6 +36,8 @@ def main():
         else:
             end_index = (i+1)*docs_each_partition
         for page in pages[start_index:end_index]:
+            doc_id += 1
+            etree.SubElement(page, "{http://www.mediawiki.org/xml/export-0.10/}doc_id").text = str(doc_id)
             root.append(page)
         tree = etree.ElementTree(root)
         tree.write(job_path+str(i)+'.in')
