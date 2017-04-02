@@ -3,12 +3,12 @@ import tornado.web
 from tornado.httpclient import AsyncHTTPClient
 from tornado import gen, process
 import socket
-import inventory
+import assignment2.inventory as inventory
 import json
 import operator
 import pickle
-import indexer
-import util
+import assignment2.indexer as indexer
+import assignment2.util as util
 import logging
 
 log = logging.getLogger(__name__)
@@ -65,9 +65,9 @@ class FrontendHandler(tornado.web.RequestHandler):
 class IndexServerHandler(tornado.web.RequestHandler):
     def initialize(self, server_id):
         self.server_id = server_id
-        with open('./../assignment4/invindex_jobs/'+str(self.server_id)+'.out', 'rb') as handle:
+        with open('assignment4/invindex_jobs/'+str(self.server_id)+'.out', 'rb') as handle:
             self.dict = pickle.load(handle)
-        with open('./../assignment4/idf_jobs/0.out', 'rb') as handle:
+        with open('assignment4/idf_jobs/0.out', 'rb') as handle:
             self.term_inv_doc_freq_dict = pickle.load(handle)
 
     @gen.coroutine
@@ -104,7 +104,7 @@ class IndexServerHandler(tornado.web.RequestHandler):
 class DocumentServerHandler(tornado.web.RequestHandler):
     def initialize(self, server_id):
         self.server_id = server_id
-        with open('./../assignment4/docs_jobs/'+str(self.server_id)+'.out', 'rb') as handle:
+        with open('assignment4/docs_jobs/'+str(self.server_id)+'.out', 'rb') as handle:
             self.dict = pickle.load(handle)
 
     @gen.coroutine

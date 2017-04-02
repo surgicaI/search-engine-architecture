@@ -1,6 +1,6 @@
 import os
 import urllib
-import inventory
+import assignment3.inventory as inventory
 import json
 import argparse
 from tornado.httpclient import AsyncHTTPClient

@@ -16,11 +16,12 @@ doc_server_ports = [55704,55705,55706]
 #doc_servers = ["http://linserv2.cims.nyu.edu:35318","http://linserv2.cims.nyu.edu:35319","http://linserv2.cims.nyu.edu:35320"]
 
 #local servers
-#index_servers = ["http://127.0.0.1:55701","http://127.0.0.1:55702","http://127.0.0.1:55703"]
-#doc_servers = ["http://127.0.0.1:55704","http://127.0.0.1:55705","http://127.0.0.1:55706"]
+frontend_port = "http://127.0.0.1:"+str(BASE_PORT)
+index_servers = ["http://127.0.0.1:55701","http://127.0.0.1:55702","http://127.0.0.1:55703"]
+doc_servers = ["http://127.0.0.1:55704","http://127.0.0.1:55705","http://127.0.0.1:55706"]
 
 #cims servers
-frontend_port = "http://linserv2.cims.nyu.edu:"+str(BASE_PORT)
-index_servers = ["http://linserv2.cims.nyu.edu:55701","http://linserv2.cims.nyu.edu:55702","http://linserv2.cims.nyu.edu:55703"]
-doc_servers = ["http://linserv2.cims.nyu.edu:55704","http://linserv2.cims.nyu.edu:55705","http://linserv2.cims.nyu.edu:55706"]
+#frontend_port = "http://linserv2.cims.nyu.edu:"+str(BASE_PORT)
+#index_servers = ["http://linserv2.cims.nyu.edu:55701","http://linserv2.cims.nyu.edu:55702","http://linserv2.cims.nyu.edu:55703"]
+#doc_servers = ["http://linserv2.cims.nyu.edu:55704","http://linserv2.cims.nyu.edu:55705","http://linserv2.cims.nyu.edu:55706"]
 

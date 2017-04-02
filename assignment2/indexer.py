@@ -1,6 +1,6 @@
 import pickle
 import xml.etree.ElementTree as etree
-import inventory as inv
+import assignment2.inventory as inv
 from nltk.tokenize import RegexpTokenizer
 import unicodedata
 import re

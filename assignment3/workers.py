@@ -3,7 +3,7 @@ import tornado.web
 from tornado.httpclient import AsyncHTTPClient
 from tornado import gen, process
 import socket
-import inventory
+import assignment3.inventory as inventory
 import logging
 import subprocess
 import json
